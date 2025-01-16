@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
+      useMaterial3: false,
       primarySwatch: Colors.blue,
       brightness: Brightness.light,
       inputDecorationTheme: InputDecorationTheme(
@@ -25,6 +26,7 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       primarySwatch: Colors.blue,
+      useMaterial3: false,
       brightness: Brightness.dark,
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/registration_provider.dart';
+import 'providers/splash_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/registration_screen.dart';
+import 'screens/splash_screen.dart';
 import 'utils/theme.dart';
 
 void main() {
@@ -10,6 +12,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SplashProvider()),
         ChangeNotifierProvider(create: (_) => RegistrationProvider()),
       ],
       child: const MyApp(),
@@ -25,11 +28,11 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Registration Form',
+          title: '',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-          home: const RegistrationScreen(),
+          home: const SplashScreen(),
           debugShowCheckedModeBanner: false,
         );
       },
