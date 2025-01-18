@@ -2,6 +2,7 @@ class BullTamer {
   final int id;
   final String name;
   final String displayName;
+  final String aadhar_image;
   final String aadharNumber;
   final String addressLine;
   final int age;
@@ -38,6 +39,7 @@ class BullTamer {
     required this.id,
     required this.name,
     required this.displayName,
+    required this.aadhar_image,
     required this.aadharNumber,
     required this.addressLine,
     required this.age,
@@ -75,6 +77,7 @@ class BullTamer {
     return BullTamer(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
+      aadhar_image: json['profile_image'] ?? '',
       displayName: json['display_name'] ?? '',
       aadharNumber: json['aadhar_number'] ?? '',
       addressLine: json['address_line'] ?? '',

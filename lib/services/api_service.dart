@@ -115,7 +115,7 @@ class ApiService {
         'model': 'bull_tamers',
         'domain': '[("aadhar_number","=","$aadharNumber")]',
         'fields':
-            '["name","aadhar_number","create_date","date_of_birth","blood_group","mobile_one","write_uid"]',
+            '["sequence","uuid","name","address_line","aadhar_number","create_date","date_of_birth","blood_group","mobile_one","write_uid","profile_image]',
         'limit': '10',
         'offset': '0',
         'order': 'id asc'
@@ -144,6 +144,96 @@ class ApiService {
         throw Exception('401UNAUTHORIZED');
       }
       throw Exception('Failed to search bull tamer: $e');
+    }
+  }
+
+  Future<List<BullTamer>> searchBullTamerUUID(String uuid) async {
+    try {
+      final token = await getAccessToken();
+      if (token == null) {
+        throw Exception('Authentication required');
+      }
+
+      final uri = Uri.parse('${AppConstants.baseUrl}/search_read');
+
+      print('UUID: $uuid');
+
+      final request = http.MultipartRequest('GET', uri);
+
+      request.fields.addAll({
+        'model': 'bull_tamers',
+        'domain': '[("uuid","=","$uuid")]',
+        'fields':
+            '["sequence","uuid","name","address_line","aadhar_number","create_date","date_of_birth","blood_group","mobile_one","write_uid","aadhar_image"]',
+        'limit': '10',
+        'offset': '0',
+        'order': 'id asc'
+      });
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
+
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        return jsonData.map((data) => BullTamer.fromJson(data)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('401UNAUTHORIZED');
+      } else {
+        final errorData = jsonDecode(response.body);
+        final errorMessage = errorData['message'] ?? 'Search failed';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      if (e.toString().contains('401')) {
+        throw Exception('401UNAUTHORIZED');
+      }
+      throw Exception('Failed to search bull tamer: $e');
+    }
+  }
+
+  Future<void> updatedBullTamer(
+      String id, String status, String entryStatus) async {
+    try {
+      final token = await getAccessToken();
+      if (token == null) {
+        throw Exception('Authentication required');
+      }
+      final uri = Uri.parse('${AppConstants.baseUrl}/write');
+      print(uri);
+      final request = http.MultipartRequest('PUT', uri);
+
+      request.fields.addAll({
+        'model': 'bull_tamers',
+        'ids': '[$id]',
+        'values': '{"$entryStatus": "$status"}',
+      });
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
+
+      final streamedResponse =
+          await request.send().timeout(const Duration(minutes: 10));
+
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        final errorMessage =
+            errorData['message'] ?? 'Failed to submit bull tamer data';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      print(e);
+      if (e is FormatException) {
+        throw Exception('Invalid response format');
+      }
+      throw Exception('Failed to submit bull tamer: $e');
     }
   }
 

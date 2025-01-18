@@ -8,6 +8,7 @@ import 'package:madhakottai_bull_tamer/screens/splash_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/bull_tamer.dart';
 import '../providers/bull_tamer_search_provider.dart';
 import '../providers/registration_provider.dart';
@@ -178,6 +179,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (bullTamerProvider.searchResults.isNotEmpty) {
       showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: const Text('Search Result'),
           content: SizedBox(
@@ -197,6 +199,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           actions: [
             TextButton(
               onPressed: () {
+                setState(() {
+                  _aadhaarController.clear();
+                });
                 Navigator.of(context).pop();
               },
               child: const Text('OK'),
@@ -222,13 +227,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => BullTamerSearchScreen()),
+                    builder: (context) => const BullTamerSearchScreen()),
               );
             },
           ),
           IconButton(
             icon: const Icon(Icons.brightness_6),
-            onPressed: () {
+            onPressed: () async {
               context.read<ThemeProvider>().toggleTheme();
             },
           ),
@@ -248,7 +253,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => BullTamerSearchScreen()),
+            MaterialPageRoute(
+                builder: (context) => const BullTamerSearchScreen()),
           );
         },
         child: const Icon(Icons.search),
@@ -274,7 +280,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           maxLength: 14, // 12 digits + 2 spaces
                           isAadhaarNumber: true,
                           controller: _aadhaarController,
-                          label: 'ஆதார் எண்',
+                          label: 'Aadhar Number / ஆதார் எண்',
                           keyboardType: TextInputType.number,
                           onChanged: (value) {
                             if (value.replaceAll(' ', '').length == 12) {
@@ -300,17 +306,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   CustomTextField(
                     controller: _nameController,
-                    label: 'காளையை அடக்குபவர் பெயர்',
+                    label: 'Bull Tamer Name / காளையை அடக்குபவர் பெயர்',
                     validator: Validators.required,
                   ),
                   CustomTextField(
                     controller: _addressController,
-                    label: 'முழு முகவரி',
+                    label: 'Full Address / முழு முகவரி',
                     maxLines: 3,
                     validator: Validators.required,
                   ),
                   SearchableDropdownField(
-                    label: 'மாவட்டம்',
+                    label: 'District / மாவட்டம்',
                     value: _selectedDistrict,
                     items: AppConstants.tnDistricts,
                     onChanged: (String? newValue) {
@@ -332,7 +338,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     validator: Validators.required,
                   ),
                   SearchableDropdownField(
-                    label: 'இரத்த வகை',
+                    label: 'Blood Group / இரத்த வகை',
                     value: _selectedBloodGroup,
                     items: AppConstants.bloodGroups,
                     onChanged: (String? newValue) {
@@ -359,7 +365,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   CustomTextField(
                     controller: _phoneController,
-                    label: 'தொலைபேசி எண்',
+                    label: 'Mobile Number / தொலைபேசி எண்',
                     keyboardType: TextInputType.phone,
                     maxLength: 15, // +91 12345 67890
                     isPhoneNumber: true,
@@ -372,20 +378,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       return null;
                     },
                   ),
-                  CustomTextField(
-                    controller: _emergencyPhoneController,
-                    label: 'அவசரத் தொடர்பு நபரின் தொலைபேசி எண்',
-                    keyboardType: TextInputType.phone,
-                    maxLength: 15, // +91 12345 67890
-                    isPhoneNumber: true,
-                    validator: (value) {
-                      if (value == null ||
-                          value.isEmpty ||
-                          value.replaceAll(' ', '').length != 13) {
-                        return 'Enter a valid 10-digit phone number including +91';
-                      }
-                      return null;
-                    },
+                  Visibility(
+                    visible: false,
+                    child: CustomTextField(
+                      controller: _emergencyPhoneController,
+                      label: 'அவசரத் தொடர்பு நபரின் தொலைபேசி எண்',
+                      keyboardType: TextInputType.phone,
+                      maxLength: 15, // +91 12345 67890
+                      isPhoneNumber: true,
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty ||
+                            value.replaceAll(' ', '').length != 13) {
+                          return 'Enter a valid 10-digit phone number including +91';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                   Visibility(
                     visible: false,
@@ -437,7 +446,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             onPressed: () =>
                                 _pickImage(ImageSource.camera, true),
-                            child: const Text('புகைப்படம்'),
+                            child: const Text('Bull Tamer Photo '),
                           ),
                         ],
                       ),
@@ -454,7 +463,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             onPressed: () =>
                                 _pickImage(ImageSource.camera, false),
-                            child: const Text('ஆதார் சான்று'),
+                            child: const Text('Bull Tamer Aadhar '),
                           ),
                         ],
                       ),
@@ -495,7 +504,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         onTap: () => _selectDate(context),
         child: InputDecorator(
           decoration: const InputDecoration(
-            labelText: 'பிறந்த தேதி',
+            labelText: 'Date of Birth / பிறந்த தேதி',
             border: OutlineInputBorder(),
             filled: true,
           ),
@@ -616,6 +625,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _addressController.dispose();
     _onlineRegNoController.dispose();
     _ageController.dispose();
+
     super.dispose();
   }
 

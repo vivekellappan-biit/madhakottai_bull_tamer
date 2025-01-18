@@ -10,6 +10,12 @@ class BullTamerSearchProvider with ChangeNotifier {
   String errorMessage = "";
   bool isLoading = false;
 
+  void clearSearchResults() {
+    searchResults.clear();
+    errorMessage = '';
+    notifyListeners();
+  }
+
   Future<void> searchBullTamer(
       String aadharNumber, BuildContext context) async {
     print(aadharNumber);
@@ -27,7 +33,56 @@ class BullTamerSearchProvider with ChangeNotifier {
       isLoading = false;
 
       if (e.toString().contains('401UNAUTHORIZED')) {
-        // Get AuthProvider instance
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+        if (context.mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Session Expired'),
+                content:
+                    const Text('Your session has expired. Please login again.'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      authProvider.logout(context);
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+        errorMessage = 'Session expired. Please login again.';
+      } else {
+        errorMessage = e.toString().replaceAll('Exception:', '').trim();
+      }
+
+      notifyListeners();
+    }
+  }
+
+  Future<void> searchBullTamerByUUID(
+      String aadharNumber, BuildContext context) async {
+    print(aadharNumber);
+    try {
+      isLoading = true;
+      errorMessage = "";
+      searchResults = [];
+      notifyListeners();
+
+      searchResults = await _apiService.searchBullTamerUUID(aadharNumber);
+
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      isLoading = false;
+
+      if (e.toString().contains('401UNAUTHORIZED')) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         if (context.mounted) {

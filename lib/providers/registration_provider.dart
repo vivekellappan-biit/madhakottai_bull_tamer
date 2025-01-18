@@ -38,7 +38,6 @@ class RegistrationProvider with ChangeNotifier {
 
       if (e.toString().contains('401')) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        // Show error dialog
         if (context.mounted) {
           await showDialog(
             context: context,
@@ -52,8 +51,55 @@ class RegistrationProvider with ChangeNotifier {
                   TextButton(
                     child: const Text('OK'),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog
-                      // Logout user using AuthProvider
+                      Navigator.of(context).pop();
+                      authProvider.logout(context);
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+
+        errorMessage = 'Session expired. Please login again.';
+      } else {
+        errorMessage = e.toString().replaceAll('Exception:', '').trim();
+      }
+
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updatedEntryStatus(String id, String status, String entryStatus,
+      BuildContext context) async {
+    try {
+      isLoading = true;
+      errorMessage = "";
+      notifyListeners();
+      await _apiService.updatedBullTamer(id, status, entryStatus);
+      isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      isLoading = false;
+
+      if (e.toString().contains('401')) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (context.mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Session Expired'),
+                content:
+                    const Text('Your session has expired. Please login again.'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
                       authProvider.logout(context);
                     },
                   ),
