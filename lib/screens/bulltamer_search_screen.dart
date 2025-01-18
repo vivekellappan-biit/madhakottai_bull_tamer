@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:madhakottai_bull_tamer/screens/pdf_generator_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/bull_tamer_search_provider.dart';
 import '../widgets/labelvalue_Row.dart';
@@ -73,37 +74,53 @@ class BullTamerSearchScreen extends StatelessWidget {
                     itemCount: provider.searchResults.length,
                     itemBuilder: (context, index) {
                       final tamer = provider.searchResults[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 0, horizontal: 0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              LabelValueRow(
-                                  label: "காளையை அடக்குபவர் பெயர்:",
-                                  value: tamer.name),
-                              LabelValueRow(
-                                  label: "இரத்த வகை:", value: tamer.bloodGroup),
-                              LabelValueRow(
-                                  label: "பிறந்த தேதி:",
-                                  value: tamer.dateOfBirth),
-                              LabelValueRow(
-                                  label: "தொலைபேசி எண்:",
-                                  value: tamer.mobileOne),
-                              LabelValueRow(
-                                  label: "ஆதார் எண்:",
-                                  value: tamer.aadharNumber),
-                              LabelValueRow(
-                                label: "Created By:",
-                                value: '${tamer.writeUid[1]}',
-                              ),
-                              LabelValueRow(
-                                label: "Created Date:",
-                                value: tamer.createDate,
-                              ),
-                            ],
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const PdfGeneratorPage(
+                                      name: "Moses Isaac Prakash Prassanna",
+                                      bloodGroup: "O +ve",
+                                      aadhar: "9876 9876 9876",
+                                      mobile: "9876543212",
+                                      address: "Addressline, City",
+                                    )),
+                          );
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 0, horizontal: 0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                LabelValueRow(
+                                    label: "காளையை அடக்குபவர் பெயர்:",
+                                    value: tamer.name),
+                                LabelValueRow(
+                                    label: "இரத்த வகை:",
+                                    value: tamer.bloodGroup),
+                                LabelValueRow(
+                                    label: "பிறந்த தேதி:",
+                                    value: tamer.dateOfBirth),
+                                LabelValueRow(
+                                    label: "தொலைபேசி எண்:",
+                                    value: tamer.mobileOne),
+                                LabelValueRow(
+                                    label: "ஆதார் எண்:",
+                                    value: tamer.aadharNumber),
+                                LabelValueRow(
+                                  label: "Created By:",
+                                  value: '${tamer.writeUid[1]}',
+                                ),
+                                LabelValueRow(
+                                  label: "Created Date:",
+                                  value: tamer.createDate,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
