@@ -20,10 +20,13 @@ class SplashScreen extends StatelessWidget {
       body: Stack(
         children: [
           Center(
-            child: Image.asset(
-              'assets/images/logo.png', // Replace with your logo file path
-              width: 200,
-              height: 200,
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 250,
+                height: 250,
+                fit: BoxFit.fitHeight,
+              ),
             ),
           ),
           const Align(
@@ -34,9 +37,8 @@ class SplashScreen extends StatelessWidget {
                 "புனித லூர்து மாதா ஜல்லிக்கட்டு பேரவை\nமாதகோட்டை, தஞ்சாவூர் மாவட்டம்",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Colors.grey,
                 ),
               ),
             ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:madhakottai_bull_tamer/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'providers/registration_provider.dart';
 import 'providers/splash_provider.dart';
 import 'providers/theme_provider.dart';
-import 'screens/registration_screen.dart';
 import 'screens/splash_screen.dart';
 import 'utils/theme.dart';
 
@@ -13,6 +13,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SplashProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => RegistrationProvider()),
       ],
       child: const MyApp(),

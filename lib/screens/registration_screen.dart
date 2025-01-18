@@ -1,11 +1,19 @@
-// lib/screens/registration_screen.dart
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:madhakottai_bull_tamer/screens/splash_screen.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/registration_provider.dart';
+import '../providers/splash_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/ validators.dart';
+import '../utils/constants.dart';
 import '../widgets/custom_text_field.dart';
+import '../widgets/dropdown_field.dart';
 import '../models/registration_model.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -18,35 +26,87 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Initialize all controllers in the state
+  // Text Controllers
   late final TextEditingController _nameController;
   late final TextEditingController _addressController;
   late final TextEditingController _onlineRegNoController;
-  late final TextEditingController _bloodGroupController;
   late final TextEditingController _ageController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _aadhaarController;
+
+  // Dropdown values
+  String? _selectedBloodGroup;
+  String? _selectedDistrict;
   DateTime? _selectedDate;
+  XFile? _userPhoto;
+  XFile? _aadhaarPhoto;
 
   @override
   void initState() {
     super.initState();
-    // Initialize controllers in initState
     _nameController = TextEditingController();
     _addressController = TextEditingController();
     _onlineRegNoController = TextEditingController();
-    _bloodGroupController = TextEditingController();
     _ageController = TextEditingController();
+    _phoneController = TextEditingController();
+    _aadhaarController = TextEditingController();
+  }
+
+  Future<void> _pickImage(ImageSource source, bool isUserPhoto) async {
+    final status = await Permission.camera.request();
+
+    if (status.isGranted) {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: source);
+      if (image != null) {
+        setState(() {
+          if (isUserPhoto) {
+            _userPhoto = image;
+          } else {
+            _aadhaarPhoto = image;
+          }
+        });
+      }
+    } else if (status.isDenied) {
+      // Handle the case when the user denies the permission
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Camera permission is required to capture photos')),
+      );
+    } else if (status.isPermanentlyDenied) {
+      // Handle the case when the user permanently denies the permission
+      openAppSettings();
+    }
+  }
+
+  String? _convertToBase64(XFile? image) {
+    if (image == null) return null;
+    final bytes = File(image.path).readAsBytesSync();
+    return base64Encode(bytes);
   }
 
   @override
   Widget build(BuildContext context) {
+    final splashProvider = Provider.of<SplashProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('பதிவு படிவம் - 2024'),
+        title: const Text('மாதாகோட்டை ஜல்லிக்கட்டு - 2025'),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
             onPressed: () {
               context.read<ThemeProvider>().toggleTheme();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await splashProvider.setLoginStatus(false);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const SplashScreen()),
+              );
             },
           ),
         ],
@@ -62,19 +122,35 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             child: Form(
               key: _formKey,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(),
-                  const SizedBox(height: 20),
                   CustomTextField(
                     controller: _nameController,
-                    label: 'பெயர்',
+                    label: 'பெயர் / Name',
                     validator: Validators.required,
                   ),
                   CustomTextField(
                     controller: _addressController,
-                    label: 'முகவரி',
+                    label: 'முகவரி / Address',
                     maxLines: 3,
                     validator: Validators.required,
+                  ),
+                  SearchableDropdownField(
+                    label: 'மாவட்டம் / District',
+                    value: _selectedDistrict,
+                    items: AppConstants.tnDistricts,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedDistrict = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a district';
+                      }
+                      return null;
+                    },
                   ),
                   CustomTextField(
                     controller: _onlineRegNoController,
@@ -82,28 +158,96 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     keyboardType: TextInputType.number,
                     validator: Validators.required,
                   ),
-                  CustomTextField(
-                    controller: _bloodGroupController,
-                    label: 'Blood Group',
-                    validator: Validators.required,
+                  SearchableDropdownField(
+                    label: 'இரத்த வகை / Blood Group',
+                    value: _selectedBloodGroup,
+                    items: AppConstants.bloodGroups,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedBloodGroup = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a blood group';
+                      }
+                      return null;
+                    },
                   ),
                   _buildDatePicker(),
                   CustomTextField(
                     controller: _ageController,
-                    label: 'Age',
+                    label: 'வயது / Age',
                     keyboardType: TextInputType.number,
                     validator: Validators.age,
                   ),
+                  CustomTextField(
+                    controller: _phoneController,
+                    label: 'தொலைபேசி எண் / Phone Number',
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          value.length != 10) {
+                        return 'Enter a valid 10-digit phone number';
+                      }
+                      return null;
+                    },
+                  ),
+                  CustomTextField(
+                    controller: _aadhaarController,
+                    label: 'ஆதார் எண் / Aadhaar Number',
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          value.length != 12) {
+                        return 'Enter a valid 12-digit Aadhaar number';
+                      }
+                      return null;
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        children: [
+                          _userPhoto == null
+                              ? const Text('')
+                              : Image.file(File(_userPhoto!.path),
+                                  width: 100, height: 100),
+                          OutlinedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                            onPressed: () =>
+                                _pickImage(ImageSource.camera, true),
+                            child: const Text('Capture User Photo'),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          _aadhaarPhoto == null
+                              ? const Text('')
+                              : Image.file(File(_aadhaarPhoto!.path),
+                                  width: 100, height: 100),
+                          OutlinedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 16),
+                            ),
+                            onPressed: () =>
+                                _pickImage(ImageSource.camera, false),
+                            child: const Text('Capture Aadhaar Photo'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   _buildSubmitButton(provider),
-                  if (provider.error != null)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        provider.error!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -115,39 +259,57 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       child: Column(
         children: [
-          Image.asset('assets/images/logo.png', height: 100),
-          const SizedBox(height: 10),
           Text(
-            'Registration Form',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
+            'மாடுபிடி வீரர்களுக்கான அடையாள அட்டை',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          )
         ],
       ),
     );
   }
 
   Widget _buildDatePicker() {
-    return ListTile(
-      title: const Text('Date of Birth'),
-      subtitle: Text(
-        _selectedDate == null
-            ? 'Select Date'
-            : DateFormat('dd-MM-yyyy').format(_selectedDate!),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: InkWell(
+        onTap: () => _selectDate(context),
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            labelText: 'பிறந்த தேதி / Date of Birth',
+            border: OutlineInputBorder(),
+            filled: true,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _selectedDate == null
+                    ? 'Select Date'
+                    : DateFormat('MM/dd/yyyy').format(_selectedDate!),
+              ),
+              const Icon(Icons.calendar_today),
+            ],
+          ),
+        ),
       ),
-      trailing: const Icon(Icons.calendar_today),
-      onTap: () => _selectDate(context),
     );
   }
 
   Widget _buildSubmitButton(RegistrationProvider provider) {
     return ElevatedButton(
       onPressed: () => _submitForm(provider),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-        child: Text('Submit'),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 15),
+      ),
+      child: const Text(
+        'Submit',
+        style: TextStyle(fontSize: 18),
       ),
     );
   }
@@ -162,53 +324,98 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        _ageController.text = (DateTime.now().year - picked.year).toString();
+        // Calculate age
+        final age = DateTime.now().year - picked.year;
+        _ageController.text = age.toString();
       });
     }
   }
 
   Future<void> _submitForm(RegistrationProvider provider) async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select date of birth')),
+        );
+        return;
+      }
+
+      final String formattedDate =
+          DateFormat('yyyy-MM-dd').format(_selectedDate!);
+      print(formattedDate);
       final registration = RegistrationModel(
         name: _nameController.text,
-        address: _addressController.text,
+        address_line: _addressController.text,
+        district: _selectedDistrict!,
         onlineRegNo: _onlineRegNoController.text,
-        bloodGroup: _bloodGroupController.text,
-        dateOfBirth: _selectedDate,
-        age: int.tryParse(_ageController.text),
+        bloodGroup: _selectedBloodGroup!,
+        dateOfBirth: formattedDate,
+        mobileNo: _phoneController.text,
+        // aadharImage: _convertToBase64(_aadhaarPhoto)!,
+        //profileImage: _convertToBase64(_userPhoto)!,
+        aadharImage: '',
+        profileImage: '',
+        aadharCardNo: _aadhaarController.text,
       );
 
-      final success = await provider.submitRegistration(registration);
+      final success = await provider.submitBullTamer(registration);
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration submitted successfully')),
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Registration submitted successfully'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    _clearForm();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
-        _formKey.currentState!.reset();
+
         _clearForm();
+      } else if (mounted) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(provider.errorMessage.isEmpty
+                  ? 'Registration failed'
+                  : provider.errorMessage)),
+        );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _onlineRegNoController.dispose();
+    _ageController.dispose();
+    super.dispose();
   }
 
   void _clearForm() {
     _nameController.clear();
     _addressController.clear();
     _onlineRegNoController.clear();
-    _bloodGroupController.clear();
     _ageController.clear();
+    _phoneController.clear();
+    _aadhaarController.clear();
     setState(() {
+      _selectedBloodGroup = null;
+      _selectedDistrict = null;
       _selectedDate = null;
+      _userPhoto = null;
+      _aadhaarPhoto = null;
     });
-  }
-
-  @override
-  void dispose() {
-    // Dispose all controllers
-    _nameController.dispose();
-    _addressController.dispose();
-    _onlineRegNoController.dispose();
-    _bloodGroupController.dispose();
-    _ageController.dispose();
-    super.dispose();
   }
 }

@@ -4,33 +4,34 @@ import '../models/registration_model.dart';
 
 class RegistrationProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
-  bool _isLoading = false;
-  String? _error;
+  String errorMessage = "";
+  bool isLoading = false;
 
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-
-  Future<bool> submitRegistration(RegistrationModel registration) async {
+  Future<bool> submitBullTamer(RegistrationModel registrationModel) async {
     try {
-      _isLoading = true;
-      _error = null;
+      isLoading = true;
+      errorMessage = "";
       notifyListeners();
-
-      await _apiService.submitRegistration(registration);
-
-      _isLoading = false;
+      final tamer = RegistrationModel(
+          name: registrationModel.name,
+          address_line: registrationModel.address_line,
+          district: registrationModel.district,
+          bloodGroup: registrationModel.bloodGroup,
+          onlineRegNo: '',
+          aadharCardNo: registrationModel.aadharCardNo,
+          mobileNo: registrationModel.mobileNo,
+          aadharImage: registrationModel.aadharImage,
+          profileImage: registrationModel.profileImage,
+          dateOfBirth: registrationModel.dateOfBirth);
+      await _apiService.submitBullTamer(tamer);
+      isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _isLoading = false;
-      _error = e.toString();
+      isLoading = false;
+      errorMessage = e.toString().replaceAll('Exception:', '').trim();
       notifyListeners();
       return false;
     }
-  }
-
-  void clearError() {
-    _error = null;
-    notifyListeners();
   }
 }
