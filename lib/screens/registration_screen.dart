@@ -577,10 +577,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         bloodGroup: _selectedBloodGroup!,
         dateOfBirth: formattedDate,
         mobileNo: _phoneController.text..replaceAll(' ', ''),
-        // aadharImage: _convertToBase64(_aadhaarPhoto)!,
-        //profileImage: _convertToBase64(_userPhoto)!,
-        aadharImage: '',
-        profileImage: '',
+        aadharImage: _convertToBase64(_aadhaarPhoto)!,
+        profileImage: _convertToBase64(_userPhoto)!,
+        // aadharImage: '',
+        //profileImage: '',
         aadharCardNo: _aadhaarController.text.replaceAll(' ', ''),
       );
 
