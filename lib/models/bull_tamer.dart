@@ -32,7 +32,7 @@ class BullTamer {
   final dynamic mobileTwo;
   final String registrationStatus;
   final dynamic remarks;
-  final int sequence;
+  final String sequence;
   final String uuid;
 
   BullTamer({
