@@ -1,44 +1,35 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../models/registration_model.dart';
-import '../providers/auth_provider.dart';
+import 'package:madhakottai_bull_tamer/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../models/bull_tamer.dart';
+import '../services/api_service.dart';
 
-class RegistrationProvider with ChangeNotifier {
+class BullTamerSearchProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
+  List<BullTamer> searchResults = [];
   String errorMessage = "";
   bool isLoading = false;
 
-  Future<bool> submitBullTamer(
-      RegistrationModel registrationModel, BuildContext context) async {
+  Future<void> searchBullTamer(
+      String aadharNumber, BuildContext context) async {
+    print(aadharNumber);
     try {
       isLoading = true;
       errorMessage = "";
+      searchResults = [];
       notifyListeners();
 
-      final tamer = RegistrationModel(
-          name: registrationModel.name,
-          address_line: registrationModel.address_line,
-          district: registrationModel.district,
-          bloodGroup: registrationModel.bloodGroup,
-          onlineRegNo: registrationModel.onlineRegNo,
-          aadharCardNo: registrationModel.aadharCardNo,
-          mobileNo: registrationModel.mobileNo,
-          aadharImage: registrationModel.aadharImage,
-          profileImage: registrationModel.profileImage,
-          emergencyMobileNo: registrationModel.emergencyMobileNo,
-          dateOfBirth: registrationModel.dateOfBirth);
+      searchResults = await _apiService.searchBullTamer(aadharNumber);
 
-      await _apiService.submitBullTamer(tamer);
       isLoading = false;
       notifyListeners();
-      return true;
     } catch (e) {
       isLoading = false;
 
-      if (e.toString().contains('401')) {
+      if (e.toString().contains('401UNAUTHORIZED')) {
+        // Get AuthProvider instance
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        // Show error dialog
+
         if (context.mounted) {
           await showDialog(
             context: context,
@@ -52,8 +43,7 @@ class RegistrationProvider with ChangeNotifier {
                   TextButton(
                     child: const Text('OK'),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog
-                      // Logout user using AuthProvider
+                      Navigator.of(context).pop();
                       authProvider.logout(context);
                     },
                   ),
@@ -62,14 +52,12 @@ class RegistrationProvider with ChangeNotifier {
             },
           );
         }
-
         errorMessage = 'Session expired. Please login again.';
       } else {
         errorMessage = e.toString().replaceAll('Exception:', '').trim();
       }
 
       notifyListeners();
-      return false;
     }
   }
 }

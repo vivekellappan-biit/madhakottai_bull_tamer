@@ -10,7 +10,6 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final splashProvider = Provider.of<SplashProvider>(context);
 
-    // Initialize splash screen state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       splashProvider.initializeSplash(context);
     });

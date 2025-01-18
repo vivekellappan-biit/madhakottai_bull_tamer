@@ -34,7 +34,7 @@ class SplashProvider extends ChangeNotifier {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     }
   }

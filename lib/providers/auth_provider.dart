@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:madhakottai_bull_tamer/screens/login_screen.dart';
 
 import 'package:madhakottai_bull_tamer/screens/registration_screen.dart';
 import 'package:madhakottai_bull_tamer/services/api_service.dart';
@@ -10,7 +11,6 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   String? accessToken;
 
-  // Getter to check if user is logged in
   bool get isLoggedIn => accessToken != null;
 
   Future<void> login(
@@ -22,7 +22,6 @@ class AuthProvider extends ChangeNotifier {
 
       final loginResponse = await _apiService.login(username, password);
 
-      // Store the tokens
       await _saveTokens(
         loginResponse.accessToken,
         loginResponse.refreshToken,
@@ -33,7 +32,6 @@ class AuthProvider extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
 
-      // Navigate to registration screen on success
       if (context.mounted) {
         Navigator.pushReplacement(
           context,
@@ -61,8 +59,10 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     if (context.mounted) {
-      // Navigate to login screen
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
   }
 

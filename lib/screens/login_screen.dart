@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              'புனித லூர்து மாதா ஜல்லிக்கட்டு பேரவை மாதகோட்டை',
+              'புனித லூர்து மாதா ஜல்லிக்கட்டு பேரவை மாதாகோட்டை',
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme

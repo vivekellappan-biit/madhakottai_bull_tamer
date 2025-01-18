@@ -1,7 +1,6 @@
 class AppConstants {
   static const String baseUrl = 'https://jallikattu.madhakottai.in/api/v2';
 
-  // Add other constants as needed
   static const double defaultPadding = 16.0;
   static const Duration networkTimeout = Duration(seconds: 10);
 
