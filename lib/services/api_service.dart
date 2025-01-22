@@ -115,7 +115,7 @@ class ApiService {
         'model': 'bull_tamers',
         'domain': '[("aadhar_number","=","$aadharNumber")]',
         'fields':
-            '["sequence","uuid","name","address_line","aadhar_number","create_date","date_of_birth","blood_group","mobile_one","write_uid","profile_image]',
+            '["sequence","aadhar_image","uuid","name","address_line","aadhar_number","create_date","date_of_birth","blood_group","mobile_one","write_uid","profile_image]',
         'limit': '10',
         'offset': '0',
         'order': 'id asc'

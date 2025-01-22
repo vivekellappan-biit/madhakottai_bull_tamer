@@ -2,13 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:madhakottai_bull_tamer/screens/bulltamer_search_screen.dart';
-import 'package:madhakottai_bull_tamer/screens/splash_screen.dart';
+import 'package:madhakottai_bull_tamer/router/router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/bull_tamer.dart';
 import '../providers/bull_tamer_search_provider.dart';
 import '../providers/registration_provider.dart';
@@ -46,6 +45,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   XFile? _userPhoto;
   XFile? _aadhaarPhoto;
   bool _isLoading = false;
+
+  Future<bool> _onWillPop() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirmation'),
+            content: const Text('Do you really want to exit the app?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
+        ) ??
+        false; // If dialog is dismissed by tapping outside, default to false
+  }
 
   @override
   void initState() {
@@ -91,79 +111,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final bytes = File(image.path).readAsBytesSync();
     return base64Encode(bytes);
   }
-
-  // Future<void> _checkAadhaarNumber(
-  //     String value, BullTamerSearchProvider bullTamerProvider) async {
-  //   // Perform the search asynchronously
-  //   await bullTamerProvider.searchBullTamer(value.replaceAll(' ', ''), context);
-
-  //   // Show the dialog with the search result
-  //   if (bullTamerProvider.searchResults.isNotEmpty) {
-  //     // If results are found, show the results in the dialog
-  //     showDialog(
-  //       context: context,
-  //       builder: (context) => AlertDialog(
-  //         title: const Text('Search Result'),
-  //         content: SizedBox(
-  //           height: 200,
-  //           width: 300,
-  //           child: ListView.builder(
-  //             itemCount: bullTamerProvider.searchResults.length,
-  //             itemBuilder: (context, index) {
-  //               final BullTamer tamer = bullTamerProvider.searchResults[index];
-  //               return ListTile(
-  //                 title: Text(tamer.name),
-  //                 subtitle: Text('Aadhaar: ${tamer.aadharNumber}'),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('OK'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   } else if (bullTamerProvider.errorMessage.isNotEmpty) {
-  //     // If an error occurs, show the error message in a dialog
-  //     showDialog(
-  //       context: context,
-  //       builder: (context) => AlertDialog(
-  //         title: const Text('Error'),
-  //         content: Text(bullTamerProvider.errorMessage),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('OK'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   } else {
-  //     // If no records are found
-  //     showDialog(
-  //       context: context,
-  //       builder: (context) => AlertDialog(
-  //         title: const Text('Search Result'),
-  //         content: const Text('No records found for this Aadhaar number.'),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('OK'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   }
-  // }
 
   Future<void> _checkAadhaarNumber(
       String value, BullTamerSearchProvider bullTamerProvider) async {
@@ -217,195 +164,55 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final splashProvider = Provider.of<SplashProvider>(context);
     final bullTamerProvider = Provider.of<BullTamerSearchProvider>(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('மாதாகோட்டை ஜல்லிக்கட்டு - 2025'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const BullTamerSearchScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.brightness_6),
-            onPressed: () async {
-              context.read<ThemeProvider>().toggleTheme();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await splashProvider.setLoginStatus(false);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const SplashScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const BullTamerSearchScreen()),
-          );
-        },
-        child: const Icon(Icons.search),
-      ),
-      body: Consumer<RegistrationProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('மாதாகோட்டை ஜல்லிக்கட்டு - 2025'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () async {
+                context.push(Routes.search);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.brightness_6),
+              onPressed: () async {
+                context.read<ThemeProvider>().toggleTheme();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await splashProvider.setLoginStatus(false);
+                context.go(Routes.login);
+              },
+            ),
+          ],
+        ),
+        body: Consumer<RegistrationProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                          maxLength: 14, // 12 digits + 2 spaces
-                          isAadhaarNumber: true,
-                          controller: _aadhaarController,
-                          label: 'Aadhar Number / ஆதார் எண்',
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            if (value.replaceAll(' ', '').length == 12) {
-                              _checkAadhaarNumber(value, bullTamerProvider);
-                            }
-                          },
-                          validator: (value) {
-                            if (value == null ||
-                                value.isEmpty ||
-                                value.replaceAll(' ', '').length != 12) {
-                              return 'Enter a valid 12-digit Aadhaar number';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      if (bullTamerProvider.isLoading)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 8.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                    ],
-                  ),
-                  CustomTextField(
-                    controller: _nameController,
-                    label: 'Bull Tamer Name / காளையை அடக்குபவர் பெயர்',
-                    validator: Validators.required,
-                  ),
-                  CustomTextField(
-                    controller: _addressController,
-                    label: 'Full Address / முழு முகவரி',
-                    maxLines: 3,
-                    validator: Validators.required,
-                  ),
-                  SearchableDropdownField(
-                    label: 'District / மாவட்டம்',
-                    value: _selectedDistrict,
-                    items: AppConstants.tnDistricts,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedDistrict = newValue;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a district';
-                      }
-                      return null;
-                    },
-                  ),
-                  CustomTextField(
-                    controller: _onlineRegNoController,
-                    label: 'Online Registration No',
-                    keyboardType: TextInputType.number,
-                    validator: Validators.required,
-                  ),
-                  SearchableDropdownField(
-                    label: 'Blood Group / இரத்த வகை',
-                    value: _selectedBloodGroup,
-                    items: AppConstants.bloodGroups,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedBloodGroup = newValue;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a blood group';
-                      }
-                      return null;
-                    },
-                  ),
-                  _buildDatePicker(),
-                  Visibility(
-                    visible: false,
-                    child: CustomTextField(
-                      controller: _ageController,
-                      label: 'வயது / Age',
-                      keyboardType: TextInputType.number,
-                      validator: Validators.age,
-                    ),
-                  ),
-                  CustomTextField(
-                    controller: _phoneController,
-                    label: 'Mobile Number / தொலைபேசி எண்',
-                    keyboardType: TextInputType.phone,
-                    maxLength: 15, // +91 12345 67890
-                    isPhoneNumber: true,
-                    validator: (value) {
-                      if (value == null ||
-                          value.isEmpty ||
-                          value.replaceAll(' ', '').length != 13) {
-                        return 'Enter a valid 10-digit phone number including +91';
-                      }
-                      return null;
-                    },
-                  ),
-                  Visibility(
-                    visible: false,
-                    child: CustomTextField(
-                      controller: _emergencyPhoneController,
-                      label: 'அவசரத் தொடர்பு நபரின் தொலைபேசி எண்',
-                      keyboardType: TextInputType.phone,
-                      maxLength: 15, // +91 12345 67890
-                      isPhoneNumber: true,
-                      validator: (value) {
-                        if (value == null ||
-                            value.isEmpty ||
-                            value.replaceAll(' ', '').length != 13) {
-                          return 'Enter a valid 10-digit phone number including +91';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  Visibility(
-                    visible: false,
-                    child: Row(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(),
+                    Row(
                       children: [
                         Expanded(
                           child: CustomTextField(
-                            maxLength: 14,
+                            maxLength: 14, // 12 digits + 2 spaces
                             isAadhaarNumber: true,
                             controller: _aadhaarController,
-                            label: 'ஆதார் எண் / Aadhaar Number',
+                            label: 'Aadhar Number / ஆதார் எண்',
                             keyboardType: TextInputType.number,
                             onChanged: (value) {
                               if (value.replaceAll(' ', '').length == 12) {
@@ -429,53 +236,179 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                       ],
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
+                    CustomTextField(
+                      controller: _nameController,
+                      label: 'Bull Tamer Name / காளையை அடக்குபவர் பெயர்',
+                      validator: Validators.required,
+                    ),
+                    CustomTextField(
+                      controller: _addressController,
+                      label: 'Full Address / முழு முகவரி',
+                      maxLines: 3,
+                      validator: Validators.required,
+                    ),
+                    SearchableDropdownField(
+                      label: 'District / மாவட்டம்',
+                      value: _selectedDistrict,
+                      items: AppConstants.tnDistricts,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedDistrict = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a district';
+                        }
+                        return null;
+                      },
+                    ),
+                    CustomTextField(
+                      controller: _onlineRegNoController,
+                      label: 'Online Registration No',
+                      keyboardType: TextInputType.number,
+                      validator: Validators.required,
+                    ),
+                    SearchableDropdownField(
+                      label: 'Blood Group / இரத்த வகை',
+                      value: _selectedBloodGroup,
+                      items: AppConstants.bloodGroups,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedBloodGroup = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a blood group';
+                        }
+                        return null;
+                      },
+                    ),
+                    _buildDatePicker(),
+                    Visibility(
+                      visible: false,
+                      child: CustomTextField(
+                        controller: _ageController,
+                        label: 'வயது / Age',
+                        keyboardType: TextInputType.number,
+                        validator: Validators.age,
+                      ),
+                    ),
+                    CustomTextField(
+                      controller: _phoneController,
+                      label: 'Mobile Number / தொலைபேசி எண்',
+                      keyboardType: TextInputType.phone,
+                      maxLength: 15, // +91 12345 67890
+                      isPhoneNumber: true,
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty ||
+                            value.replaceAll(' ', '').length != 13) {
+                          return 'Enter a valid 10-digit phone number including +91';
+                        }
+                        return null;
+                      },
+                    ),
+                    Visibility(
+                      visible: false,
+                      child: CustomTextField(
+                        controller: _emergencyPhoneController,
+                        label: 'அவசரத் தொடர்பு நபரின் தொலைபேசி எண்',
+                        keyboardType: TextInputType.phone,
+                        maxLength: 15, // +91 12345 67890
+                        isPhoneNumber: true,
+                        validator: (value) {
+                          if (value == null ||
+                              value.isEmpty ||
+                              value.replaceAll(' ', '').length != 13) {
+                            return 'Enter a valid 10-digit phone number including +91';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    Visibility(
+                      visible: false,
+                      child: Row(
                         children: [
-                          _userPhoto == null
-                              ? const Text('')
-                              : Image.file(File(_userPhoto!.path),
-                                  width: 100, height: 100),
-                          OutlinedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 16),
+                          Expanded(
+                            child: CustomTextField(
+                              maxLength: 14,
+                              isAadhaarNumber: true,
+                              controller: _aadhaarController,
+                              label: 'ஆதார் எண் / Aadhaar Number',
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                if (value.replaceAll(' ', '').length == 12) {
+                                  _checkAadhaarNumber(value, bullTamerProvider);
+                                }
+                              },
+                              validator: (value) {
+                                if (value == null ||
+                                    value.isEmpty ||
+                                    value.replaceAll(' ', '').length != 12) {
+                                  return 'Enter a valid 12-digit Aadhaar number';
+                                }
+                                return null;
+                              },
                             ),
-                            onPressed: () =>
-                                _pickImage(ImageSource.camera, true),
-                            child: const Text('Bull Tamer Photo '),
                           ),
+                          if (bullTamerProvider.isLoading)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 8.0),
+                              child: CircularProgressIndicator(),
+                            ),
                         ],
                       ),
-                      Column(
-                        children: [
-                          _aadhaarPhoto == null
-                              ? const Text('')
-                              : Image.file(File(_aadhaarPhoto!.path),
-                                  width: 100, height: 100),
-                          OutlinedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 16),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          children: [
+                            _userPhoto == null
+                                ? const Text('')
+                                : Image.file(File(_userPhoto!.path),
+                                    width: 100, height: 100),
+                            OutlinedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 16, horizontal: 16),
+                              ),
+                              onPressed: () =>
+                                  _pickImage(ImageSource.camera, true),
+                              child: const Text('Bull Tamer Photo '),
                             ),
-                            onPressed: () =>
-                                _pickImage(ImageSource.camera, false),
-                            child: const Text('Bull Tamer Aadhar '),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSubmitButton(provider, splashProvider),
-                ],
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            _aadhaarPhoto == null
+                                ? const Text('')
+                                : Image.file(File(_aadhaarPhoto!.path),
+                                    width: 100, height: 100),
+                            OutlinedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 16, horizontal: 16),
+                              ),
+                              onPressed: () =>
+                                  _pickImage(ImageSource.camera, false),
+                              child: const Text('Bull Tamer Aadhar '),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSubmitButton(provider, splashProvider),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

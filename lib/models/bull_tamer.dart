@@ -34,12 +34,14 @@ class BullTamer {
   final dynamic remarks;
   final String sequence;
   final String uuid;
+  final String profile_image;
 
   BullTamer({
     required this.id,
     required this.name,
     required this.displayName,
     required this.aadhar_image,
+    required this.profile_image,
     required this.aadharNumber,
     required this.addressLine,
     required this.age,
@@ -77,7 +79,8 @@ class BullTamer {
     return BullTamer(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
-      aadhar_image: json['profile_image'] ?? '',
+      aadhar_image: json['aadhar_image'] ?? '',
+      profile_image: json['profile_image'] ?? '',
       displayName: json['display_name'] ?? '',
       aadharNumber: json['aadhar_number'] ?? '',
       addressLine: json['address_line'] ?? '',

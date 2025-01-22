@@ -74,17 +74,13 @@ class BullTamerSearchProvider with ChangeNotifier {
       errorMessage = "";
       searchResults = [];
       notifyListeners();
-
       searchResults = await _apiService.searchBullTamerUUID(aadharNumber);
-
       isLoading = false;
       notifyListeners();
     } catch (e) {
       isLoading = false;
-
       if (e.toString().contains('401UNAUTHORIZED')) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
         if (context.mounted) {
           await showDialog(
             context: context,

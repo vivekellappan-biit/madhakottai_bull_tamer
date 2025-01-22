@@ -369,11 +369,14 @@
 // }
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:madhakottai_bull_tamer/providers/registration_provider.dart';
+import 'package:madhakottai_bull_tamer/router/router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/bull_tamer.dart';
 import '../providers/bull_tamer_search_provider.dart';
+import '../widgets/base64_image_dialog.dart';
 import '../widgets/labelvalue_Row.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
@@ -382,10 +385,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
+
+import 'qr_scanner_screen.dart';
 
 class BullTamerSearchScreen extends StatefulWidget {
   const BullTamerSearchScreen({super.key});
@@ -398,18 +401,20 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     with AutomaticKeepAliveClientMixin {
   late BullTamer tamer;
   final TextEditingController _aadharController = TextEditingController();
-  bool _isScanning = false;
 
-  @override
-  bool get wantKeepAlive => false; // Set to false to clear state when leaving
-
-  @override
-  void dispose() {
-    // Clear the search results when disposing
-    context.read<BullTamerSearchProvider>().clearSearchResults();
-    _aadharController.dispose();
-    super.dispose();
+  Future<void> _navigateToScanner() async {
+    if (!mounted) return;
+    final result = await context.push<String>(Routes.qrScan);
+    if (!mounted) return;
+    if (result != null) {
+      context
+          .read<BullTamerSearchProvider>()
+          .searchBullTamerByUUID(result, context);
+    }
   }
+
+  @override
+  bool get wantKeepAlive => false;
 
   Future<pw.MemoryImage> base64ToImage(String base64String) async {
     try {
@@ -456,7 +461,7 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
 
     // Convert base64 to image
-    final profileImage = await base64ToImage(tamer.aadhar_image);
+    final profileImage = await base64ToImage(tamer.profile_image);
 
     // Generate QR code image
     final qrBytes = await generateQrImage();
@@ -559,7 +564,7 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                             height: 10,
                           ),
                           pw.Text(
-                            'Address: ${tamer..addressLine}',
+                            'Address: ${tamer.addressLine}',
                             style: pw.TextStyle(
                               fontSize: 18,
                               fontWeight: pw.FontWeight.normal,
@@ -602,42 +607,11 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     final file = File('${output.path}/Bull Tamer_Identity_Card.pdf');
     await file.writeAsBytes(await pdf.save());
 
-    //shareTextWithWhatsapp();
-    //sharePdfToWhatsapp(file.path);
     final result = await Share.shareXFiles([XFile(file.path)], text: 'ID Card');
-    // sharePdfWithWhatsapp(file.path);
     if (result.status == ShareResultStatus.success) {
       print('ID Card shared successfully!');
     }
   }
-
-  // Future<void> sharePdfWithWhatsapp(String filePath) async {
-  //   print("called");
-  //   String phoneNumber =
-  //       "+919345281193"; // Add recipient's phone number with country code
-  //   String message = "Hello, please find the attached PDF.";
-
-  //   if (Platform.isAndroid) {
-  //     final Uri uri = Uri.parse(
-  //         "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}");
-  //     if (await canLaunchUrl(uri)) {
-  //       await Share.shareXFiles([XFile(filePath)], text: message);
-  //     } else {
-  //       throw 'Could not launch WhatsApp';
-  //     }
-  //   } else if (Platform.isIOS) {
-  //     // For iOS
-  //     final Uri uri = Uri.parse(
-  //         "https://wa.me/${phoneNumber.replaceAll('+', '')}?text=${Uri.encodeComponent(message)}");
-  //     if (await canLaunchUrl(uri)) {
-  //       await Share.shareXFiles([XFile(filePath)], text: message);
-  //     } else {
-  //       throw 'Could not launch WhatsApp';
-  //     }
-  //   } else {
-  //     throw 'Unsupported platform';
-  //   }
-  // }
 
   Future<void> sendTextToWhatsapp(String message, String phoneNumber) async {
     final String encodedMessage = Uri.encodeComponent(message);
@@ -651,83 +625,13 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     }
   }
 
-  // Future<void> shareTextWithWhatsapp() async {
-  //   print("called");
-  //   String phoneNumber =
-  //       "+919345281193"; // Add recipient's phone number with country code
-  //   String message = "Hello, this is a text message sent via WhatsApp.";
-
-  //   if (Platform.isAndroid) {
-  //     // For Android
-  //     final Uri uri = Uri.parse(
-  //         "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}");
-  //     if (await canLaunchUrl(uri)) {
-  //       await launchUrl(uri);
-  //     } else {
-  //       throw 'Could not launch WhatsApp';
-  //     }
-  //   } else if (Platform.isIOS) {
-  //     // For iOS
-  //     final Uri uri = Uri.parse(
-  //         "https://wa.me/${phoneNumber.replaceAll('+', '')}?text=${Uri.encodeComponent(message)}");
-  //     if (await canLaunchUrl(uri)) {
-  //       await launchUrl(uri);
-  //     } else {
-  //       throw 'Could not launch WhatsApp';
-  //     }
-  //   } else {
-  //     throw 'Unsupported platform';
-  //   }
-  // }
-
-  // Future<void> sharePdfToWhatsapp(String filePath) async {
-  //   String phoneNumber = "+919791062925"; // WhatsApp number with country code
-  //   String message = "ID Card"; // Custom message to send
-  //   final result = await Share.shareXFiles([XFile(filePath)], text: message);
-  //   String url =
-  //       "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}";
-
-  //   // Open WhatsApp with the link
-  //   if (await canLaunch(url)) {
-  //     await launch(url);
-  //   } else {
-  //     throw 'Could not open WhatsApp';
-  //   }
-  // }
-
-  Widget _buildQRScanner() {
-    return SizedBox(
-      height: 300,
-      child: _isScanning
-          ? MobileScanner(
-              onDetect: (capture) {
-                final List<Barcode> barcodes = capture.barcodes;
-                for (final barcode in barcodes) {
-                  final String? code = barcode.rawValue;
-                  if (code != null && code.length == 12) {
-                    setState(() {
-                      _isScanning = false;
-                      _aadharController.text = code;
-                    });
-                    context
-                        .read<BullTamerSearchProvider>()
-                        .searchBullTamer(code, context);
-                  }
-                }
-              },
-            )
-          : Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _isScanning = true;
-                  });
-                },
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Scan QR Code'),
-              ),
-            ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    // Clear results when the screen is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BullTamerSearchProvider>().clearSearchResults();
+    });
   }
 
   @override
@@ -743,25 +647,47 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
-              controller: _aadharController,
-              decoration: const InputDecoration(
-                labelText: 'Aadhar Number',
-                hintText: 'Enter 12 digit Aadhar number',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              maxLength: 12,
-              onChanged: (value) {
-                if (value.length == 12) {
-                  context
-                      .read<BullTamerSearchProvider>()
-                      .searchBullTamer(value, context);
-                }
-              },
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 80, // Adjusted to account for maxLength counter
+                    child: TextField(
+                      controller: _aadharController,
+                      decoration: const InputDecoration(
+                        labelText: 'Aadhar Number',
+                        hintText: 'Enter 12 digit Aadhar number',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      maxLength: 12,
+                      onChanged: (value) {
+                        if (value.length == 12) {
+                          context
+                              .read<BullTamerSearchProvider>()
+                              .searchBullTamer(value, context);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Padding(
+                  padding: const EdgeInsets.only(
+                      bottom: 24), // Adjust this value as needed
+                  child: IconButton(
+                    onPressed: _navigateToScanner,
+                    icon: const Icon(
+                      Icons.qr_code_scanner,
+                      size: 28,
+                    ),
+                    tooltip: 'Scan QR Code',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            _buildQRScanner(),
+            //_buildQRScanner(),
             const SizedBox(height: 24),
             Expanded(
               child: Consumer<BullTamerSearchProvider>(
@@ -790,9 +716,7 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                     itemBuilder: (context, index) {
                       final tamer2 = provider.searchResults[index];
                       return GestureDetector(
-                        onTap: () {
-                          // ... [Keep existing onTap code unchanged] ...
-                        },
+                        onTap: () {},
                         child: Card(
                           margin: const EdgeInsets.symmetric(
                               vertical: 8, horizontal: 0),
@@ -824,82 +748,226 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                                   label: "Created Date:",
                                   value: tamer2.createDate,
                                 ),
-                                const Text('Entry Status'),
                                 Row(
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: OutlinedButton(
-                                          onPressed: () {
-                                            _submitForm(
-                                                registrationProvider,
-                                                "Not Entered",
-                                                tamer2.id,
-                                                "entry_status");
-                                          },
-                                          child: const Text('Not Entered')),
+                                        onPressed: () {
+                                          showImageDialog(
+                                              context, tamer2.profile_image);
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: Colors.blue
+                                              .shade50, // Light background color
+                                          side: const BorderSide(
+                                              color:
+                                                  Colors.blue), // Border color
+                                        ),
+                                        child: const Text(
+                                          'View Profile',
+                                          style: TextStyle(
+                                              color: Colors.blue), // Text color
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(
                                       width: 8,
                                     ),
                                     Expanded(
                                       child: OutlinedButton(
-                                          onPressed: () async {
-                                            _submitForm(
-                                                registrationProvider,
-                                                "Entered",
-                                                tamer2.id,
-                                                "entry_status");
-                                          },
-                                          child: const Text('Entered')),
-                                    )
+                                        onPressed: () {
+                                          showImageDialog(
+                                              context, tamer2.aadhar_image);
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: Colors.blue
+                                              .shade50, // Light background color
+                                          side: const BorderSide(
+                                              color:
+                                                  Colors.blue), // Border color
+                                        ),
+                                        child: const Text(
+                                          'View Aadhar',
+                                          style: TextStyle(
+                                              color: Colors.blue), // Text color
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                const Text('Registration Status'),
+                                const Padding(
+                                  padding: EdgeInsets.only(bottom: 4, top: 4),
+                                  child: Text(
+                                    'Entry Status',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                  ),
+                                ),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     Expanded(
                                       child: OutlinedButton(
-                                          onPressed: () {
-                                            _submitForm(
-                                                registrationProvider,
-                                                "Registered",
-                                                tamer2.id,
-                                                "registration_status");
-                                          },
-                                          child: const Text('Registered')),
+                                        onPressed: () {
+                                          _submitForm(
+                                              registrationProvider,
+                                              "Not Entered",
+                                              tamer2.id,
+                                              "entry_status");
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: tamer2.entryStatus ==
+                                                  "Not Entered"
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          side: BorderSide(
+                                              color: tamer2.entryStatus ==
+                                                      "Not Entered"
+                                                  ? Colors.blue
+                                                  : Colors.grey),
+                                        ),
+                                        child: const Text(
+                                          'Not Entered',
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(
                                       width: 8,
                                     ),
                                     Expanded(
                                       child: OutlinedButton(
-                                          onPressed: () {
-                                            _submitForm(
-                                                registrationProvider,
-                                                "Verified",
-                                                tamer2.id,
-                                                "registration_status");
-                                          },
-                                          child: const Text('Verified')),
+                                        onPressed: () async {
+                                          _submitForm(
+                                              registrationProvider,
+                                              "Entered",
+                                              tamer2.id,
+                                              "entry_status");
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor:
+                                              tamer2.entryStatus == "Entered"
+                                                  ? Colors.blue
+                                                  : Colors.transparent,
+                                          side: BorderSide(
+                                              color: tamer2.entryStatus ==
+                                                      "Entered"
+                                                  ? Colors.blue
+                                                  : Colors.grey),
+                                        ),
+                                        child: const Text(
+                                          'Entered',
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8, bottom: 4),
+                                  child: Text(
+                                    'Registration Status',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          _submitForm(
+                                              registrationProvider,
+                                              "Registered",
+                                              tamer2.id,
+                                              "registration_status");
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor:
+                                              tamer2.registrationStatus ==
+                                                      "Registered"
+                                                  ? Colors.blue
+                                                  : Colors.transparent,
+                                          side: BorderSide(
+                                              color:
+                                                  tamer2.registrationStatus ==
+                                                          "Registered"
+                                                      ? Colors.blue
+                                                      : Colors.grey),
+                                        ),
+                                        child: const Text(
+                                          'Registered',
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(
                                       width: 8,
                                     ),
                                     Expanded(
                                       child: OutlinedButton(
-                                          onPressed: () {
-                                            _submitForm(
-                                                registrationProvider,
-                                                "Cancelled",
-                                                tamer2.id,
-                                                "registration_status");
-                                          },
-                                          child: const Text('Cancelled')),
-                                    )
+                                        onPressed: () {
+                                          _submitForm(
+                                              registrationProvider,
+                                              "Verified",
+                                              tamer2.id,
+                                              "registration_status");
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor:
+                                              tamer2.registrationStatus ==
+                                                      "Verified"
+                                                  ? Colors.green
+                                                  : Colors.transparent,
+                                          side: BorderSide(
+                                              color:
+                                                  tamer2.registrationStatus ==
+                                                          "Verified"
+                                                      ? Colors.green
+                                                      : Colors.grey),
+                                        ),
+                                        child: const Text(
+                                          'Verified',
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 8,
+                                    ),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          _submitForm(
+                                              registrationProvider,
+                                              "Cancelled",
+                                              tamer2.id,
+                                              "registration_status");
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor:
+                                              tamer2.registrationStatus ==
+                                                      "Cancelled"
+                                                  ? Colors.red
+                                                  : Colors.transparent,
+                                          side: BorderSide(
+                                              color:
+                                                  tamer2.registrationStatus ==
+                                                          "Cancelled"
+                                                      ? Colors.red
+                                                      : Colors.grey),
+                                        ),
+                                        child: const Text(
+                                          'Cancelled',
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 Row(
@@ -910,12 +978,12 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                                         tamer = tamer2;
 
                                         String message = """
-புனித லூர்து மாதா ஜெயிலிக்கட்டு பேரவை 2025
+லூர்து மாதா ஜல்லிக்கட்டு பேரவை 2025
 மாதாக்கோட்டை, தஞ்சாவூர்
 நாள்: 01-பிப்ரவரி-2025 சனிக்கிழமை
-நேரம்: காலை 7 மணி
 
 Participant Details:
+Token No: ${tamer.sequence}
 Name: ${tamer.name}
 Blood Group: ${tamer.bloodGroup}
 Aadhar: ${tamer.aadharNumber}
@@ -978,6 +1046,9 @@ Address: ${tamer.addressLine}
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
+                  context
+                      .read<BullTamerSearchProvider>()
+                      .searchBullTamer(_aadharController.text, context);
                   Navigator.of(context).pop();
                 },
               ),

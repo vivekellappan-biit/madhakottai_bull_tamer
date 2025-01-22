@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:madhakottai_bull_tamer/providers/auth_provider.dart';
 import 'package:madhakottai_bull_tamer/providers/bull_tamer_search_provider.dart';
+import 'package:madhakottai_bull_tamer/router/app_routes.dart';
 import 'package:provider/provider.dart';
 import 'providers/registration_provider.dart';
 import 'providers/splash_provider.dart';
 import 'providers/theme_provider.dart';
-import 'screens/splash_screen.dart';
 import 'utils/theme.dart';
 
 void main() {
@@ -30,12 +30,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: '',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-          home: const SplashScreen(),
+          routerConfig: router,
           debugShowCheckedModeBanner: false,
         );
       },

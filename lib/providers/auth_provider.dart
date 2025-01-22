@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:madhakottai_bull_tamer/providers/splash_provider.dart';
 import 'package:madhakottai_bull_tamer/screens/login_screen.dart';
 
 import 'package:madhakottai_bull_tamer/screens/registration_screen.dart';
 import 'package:madhakottai_bull_tamer/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../router/router.dart';
 
 class AuthProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -33,10 +37,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const RegistrationScreen()),
-        );
+        context.go(Routes.home);
       }
     } catch (e) {
       isLoading = false;
