@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:madhakottai_bull_tamer/providers/bull_tamer_company_search_provider.dart';
 import 'package:madhakottai_bull_tamer/router/router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -70,6 +71,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   void initState() {
     super.initState();
+
     _nameController = TextEditingController();
     _addressController = TextEditingController();
     _onlineRegNoController = TextEditingController();
@@ -163,12 +165,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     final splashProvider = Provider.of<SplashProvider>(context);
     final bullTamerProvider = Provider.of<BullTamerSearchProvider>(context);
+    final bullTamerCompanyProvider =
+        Provider.of<BullTamerCompanyProfileProvider>(context);
 
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('மாதாகோட்டை ஜல்லிக்கட்டு - 2025'),
+          title: const Text('ஜல்லிக்கட்டு காளையை அடக்குபவர் பதிவு படிவம்'),
           actions: [
             IconButton(
               icon: const Icon(Icons.search),

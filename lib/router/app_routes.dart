@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madhakottai_bull_tamer/router/router.dart';
 import 'package:madhakottai_bull_tamer/screens/bulltamer_search_screen.dart';
+import 'package:madhakottai_bull_tamer/screens/loading_screen.dart';
 import 'package:madhakottai_bull_tamer/screens/login_screen.dart';
 import 'package:madhakottai_bull_tamer/screens/qr_scanner_screen.dart';
 import 'package:madhakottai_bull_tamer/screens/registration_screen.dart';
@@ -49,6 +50,14 @@ final GoRouter router = GoRouter(
         context: context,
         state: state,
         child: const QRScannerScreen(),
+      ),
+    ),
+    GoRoute(
+      path: Routes.loading,
+      pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+        context: context,
+        state: state,
+        child: const LoadingScreen(),
       ),
     ),
   ],

@@ -32,7 +32,7 @@ class SplashScreen extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(16.0),
               child: Text(
-                "புனித லூர்து மாதா ஜல்லிக்கட்டு பேரவை\nமாதகோட்டை, தஞ்சாவூர் மாவட்டம்",
+                "ஜல்லிக்கட்டு காளையை அடக்குபவர் பதிவு படிவம்",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,

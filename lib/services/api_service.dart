@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:madhakottai_bull_tamer/models/company_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bull_tamer.dart';
 import '../models/login_response.dart';
@@ -234,6 +235,52 @@ class ApiService {
         throw Exception('Invalid response format');
       }
       throw Exception('Failed to submit bull tamer: $e');
+    }
+  }
+
+  Future<List<CompanyModel>> searchCompanyProfile() async {
+    try {
+      final token = await getAccessToken();
+      if (token == null) {
+        throw Exception('Authentication required');
+      }
+
+      final uri = Uri.parse('${AppConstants.baseUrl}/search_read');
+
+      final request = http.MultipartRequest('GET', uri);
+
+      request.fields.addAll({
+        'model': 'res.company',
+        'domain': '[("id","=",1)]',
+        'fields': '["name","street","street2","logo"]',
+        'limit': '10',
+        'offset': '0',
+        'order': 'id asc'
+      });
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
+
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        return jsonData.map((data) => CompanyModel.fromJson(data)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('401UNAUTHORIZED');
+      } else {
+        final errorData = jsonDecode(response.body);
+        final errorMessage = errorData['message'] ?? 'Search failed';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      if (e.toString().contains('401')) {
+        throw Exception('401UNAUTHORIZED');
+      }
+      throw Exception('Failed to search bull tamer: $e');
     }
   }
 

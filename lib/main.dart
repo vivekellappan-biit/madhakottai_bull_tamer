@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:madhakottai_bull_tamer/providers/auth_provider.dart';
+import 'package:madhakottai_bull_tamer/providers/bull_tamer_company_search_provider.dart';
 import 'package:madhakottai_bull_tamer/providers/bull_tamer_search_provider.dart';
 import 'package:madhakottai_bull_tamer/router/app_routes.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,8 @@ void main() {
         ChangeNotifierProvider(create: (_) => SplashProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => BullTamerSearchProvider()),
+        ChangeNotifierProvider(
+            create: (_) => BullTamerCompanyProfileProvider()),
         ChangeNotifierProvider(create: (_) => RegistrationProvider()),
       ],
       child: const MyApp(),

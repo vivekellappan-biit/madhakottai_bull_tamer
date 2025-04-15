@@ -5,4 +5,5 @@ abstract class Routes {
   static const home = "/homeScreen";
   static const search = "/searchScreen";
   static const qrScan = "/scanScreen";
+  static const loading = "/loadingScreen";
 }

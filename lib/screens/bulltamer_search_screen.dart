@@ -368,9 +368,12 @@
 //   }
 // }
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madhakottai_bull_tamer/providers/registration_provider.dart';
+import 'package:madhakottai_bull_tamer/providers/splash_provider.dart';
 import 'package:madhakottai_bull_tamer/router/router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -401,6 +404,7 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     with AutomaticKeepAliveClientMixin {
   late BullTamer tamer;
   final TextEditingController _aadharController = TextEditingController();
+  String logo = "", name = "", street = "", street2 = "";
 
   Future<void> _navigateToScanner() async {
     if (!mounted) return;
@@ -456,11 +460,12 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
   Future<void> generateAndSharePDF() async {
     final pdf = pw.Document();
 
-    // Load the logo image
-    final logoBytes = await rootBundle.load("assets/images/frame.png");
-    final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
+    // Decode the base64 logo string (replace with your actual base64 string)
 
-    // Convert base64 to image
+    final logoBytes = base64Decode(logo);
+    final logoImage = pw.MemoryImage(logoBytes);
+
+    // Convert base64 profile image to pw.MemoryImage
     final profileImage = await base64ToImage(tamer.profile_image);
 
     // Generate QR code image
@@ -482,13 +487,11 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                     height: 50,
                     child: pw.Image(
                       logoImage,
-                      fit: pw.BoxFit
-                          .scaleDown, // Adjust the fit to scale down while preserving aspect ratio
+                      fit: pw.BoxFit.scaleDown,
                     ),
                   ),
                 ),
                 pw.SizedBox(height: 20),
-
                 pw.Center(
                   child: pw.Text(
                     "Bull Tamer's Identity Card",
@@ -499,8 +502,6 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                   ),
                 ),
                 pw.SizedBox(height: 20),
-
-                // ID Number
                 pw.Center(
                   child: pw.Text(
                     '-${tamer.sequence}-',
@@ -511,8 +512,6 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                   ),
                 ),
                 pw.SizedBox(height: 20),
-
-                // Details
                 pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
@@ -521,55 +520,22 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text(
-                            'Name: ${tamer.name}',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.normal,
-                            ),
-                          ),
+                          pw.Text('Name: ${tamer.name}', style: _textStyle()),
                           pw.SizedBox(height: 10),
-                          pw.Text(
-                            'Blood Group: ${tamer.bloodGroup}',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.normal,
-                            ),
-                          ),
+                          pw.Text('Blood Group: ${tamer.bloodGroup}',
+                              style: _textStyle()),
                           pw.SizedBox(height: 10),
-                          pw.Text(
-                            'Date Of Birth: ${tamer.dateOfBirth}',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.normal,
-                            ),
-                          ),
+                          pw.Text('Date Of Birth: ${tamer.dateOfBirth}',
+                              style: _textStyle()),
                           pw.SizedBox(height: 10),
-                          pw.Text(
-                            'Aadhar: ${tamer.aadharNumber}',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.normal,
-                            ),
-                          ),
+                          pw.Text('Aadhar: ${tamer.aadharNumber}',
+                              style: _textStyle()),
                           pw.SizedBox(height: 10),
-                          pw.Text(
-                            'Mobile: ${tamer.mobileOne}',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.normal,
-                            ),
-                          ),
-                          pw.SizedBox(
-                            height: 10,
-                          ),
-                          pw.Text(
-                            'Address: ${tamer.addressLine}',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.normal,
-                            ),
-                          ),
+                          pw.Text('Mobile: ${tamer.mobileOne}',
+                              style: _textStyle()),
+                          pw.SizedBox(height: 10),
+                          pw.Text('Address: ${tamer.addressLine}',
+                              style: _textStyle()),
                         ],
                       ),
                     ),
@@ -577,14 +543,12 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                       flex: 1,
                       child: pw.Column(
                         children: [
-                          // Profile Photo
                           pw.Container(
                             width: 100,
                             height: 120,
                             child: pw.Image(profileImage, fit: pw.BoxFit.cover),
                           ),
                           pw.SizedBox(height: 10),
-                          // QR Code
                           pw.Container(
                             width: 100,
                             height: 100,
@@ -604,7 +568,7 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
 
     // Save and share PDF
     final output = await getTemporaryDirectory();
-    final file = File('${output.path}/Bull Tamer_Identity_Card.pdf');
+    final file = File('${output.path}/Bull_Tamer_Identity_Card.pdf');
     await file.writeAsBytes(await pdf.save());
 
     final result = await Share.shareXFiles([XFile(file.path)], text: 'ID Card');
@@ -612,6 +576,170 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
       print('ID Card shared successfully!');
     }
   }
+
+  pw.TextStyle _textStyle() {
+    return pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.normal);
+  }
+
+  // Future<void> generateAndSharePDF() async {
+  //   final pdf = pw.Document();
+
+  //   // Load the logo image
+  //   final logoBytes = await rootBundle.load("assets/images/frame.png");
+  //   final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
+
+  //   // Convert base64 to image
+  //   final profileImage = await base64ToImage(tamer.profile_image);
+
+  //   // Generate QR code image
+  //   final qrBytes = await generateQrImage();
+  //   final qrImage = pw.MemoryImage(qrBytes);
+
+  //   pdf.addPage(
+  //     pw.Page(
+  //       pageFormat: PdfPageFormat.a4,
+  //       build: (pw.Context context) {
+  //         return pw.Container(
+  //           padding: const pw.EdgeInsets.all(8),
+  //           child: pw.Column(
+  //             crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //             children: [
+  //               // Header
+  //               pw.Expanded(
+  //                 child: pw.Container(
+  //                   height: 50,
+  //                   child: pw.Image(
+  //                     logoImage,
+  //                     fit: pw.BoxFit
+  //                         .scaleDown, // Adjust the fit to scale down while preserving aspect ratio
+  //                   ),
+  //                 ),
+  //               ),
+  //               pw.SizedBox(height: 20),
+
+  //               pw.Center(
+  //                 child: pw.Text(
+  //                   "Bull Tamer's Identity Card",
+  //                   style: pw.TextStyle(
+  //                     fontSize: 18,
+  //                     fontWeight: pw.FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //               pw.SizedBox(height: 20),
+
+  //               // ID Number
+  //               pw.Center(
+  //                 child: pw.Text(
+  //                   '-${tamer.sequence}-',
+  //                   style: pw.TextStyle(
+  //                     fontSize: 40,
+  //                     fontWeight: pw.FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //               pw.SizedBox(height: 20),
+
+  //               // Details
+  //               pw.Row(
+  //                 crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //                 children: [
+  //                   pw.Expanded(
+  //                     flex: 3,
+  //                     child: pw.Column(
+  //                       crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //                       children: [
+  //                         pw.Text(
+  //                           'Name: ${tamer.name}',
+  //                           style: pw.TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: pw.FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                         pw.SizedBox(height: 10),
+  //                         pw.Text(
+  //                           'Blood Group: ${tamer.bloodGroup}',
+  //                           style: pw.TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: pw.FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                         pw.SizedBox(height: 10),
+  //                         pw.Text(
+  //                           'Date Of Birth: ${tamer.dateOfBirth}',
+  //                           style: pw.TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: pw.FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                         pw.SizedBox(height: 10),
+  //                         pw.Text(
+  //                           'Aadhar: ${tamer.aadharNumber}',
+  //                           style: pw.TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: pw.FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                         pw.SizedBox(height: 10),
+  //                         pw.Text(
+  //                           'Mobile: ${tamer.mobileOne}',
+  //                           style: pw.TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: pw.FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                         pw.SizedBox(
+  //                           height: 10,
+  //                         ),
+  //                         pw.Text(
+  //                           'Address: ${tamer.addressLine}',
+  //                           style: pw.TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: pw.FontWeight.normal,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   pw.Expanded(
+  //                     flex: 1,
+  //                     child: pw.Column(
+  //                       children: [
+  //                         // Profile Photo
+  //                         pw.Container(
+  //                           width: 100,
+  //                           height: 120,
+  //                           child: pw.Image(profileImage, fit: pw.BoxFit.cover),
+  //                         ),
+  //                         pw.SizedBox(height: 10),
+  //                         // QR Code
+  //                         pw.Container(
+  //                           width: 100,
+  //                           height: 100,
+  //                           child: pw.Image(qrImage),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+
+  //   // Save and share PDF
+  //   final output = await getTemporaryDirectory();
+  //   final file = File('${output.path}/Bull Tamer_Identity_Card.pdf');
+  //   await file.writeAsBytes(await pdf.save());
+
+  //   final result = await Share.shareXFiles([XFile(file.path)], text: 'ID Card');
+  //   if (result.status == ShareResultStatus.success) {
+  //     print('ID Card shared successfully!');
+  //   }
+  // }
 
   Future<void> sendTextToWhatsapp(String message, String phoneNumber) async {
     final String encodedMessage = Uri.encodeComponent(message);
@@ -632,6 +760,17 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BullTamerSearchProvider>().clearSearchResults();
     });
+    readCompanyDetails();
+  }
+
+  void readCompanyDetails() async {
+    final logoDetails =
+        await Provider.of<SplashProvider>(context, listen: false)
+            .getLogoDetails();
+    logo = logoDetails['logo'] ?? "";
+    name = logoDetails['name'] ?? "";
+    street = logoDetails['street'] ?? "";
+    street2 = logoDetails['street2'] ?? "";
   }
 
   @override
@@ -641,7 +780,7 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Bull Tamer'),
+        title: const Text('தேடல்'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -978,9 +1117,9 @@ class _BullTamerSearchScreenState extends State<BullTamerSearchScreen>
                                         tamer = tamer2;
 
                                         String message = """
-லூர்து மாதா ஜல்லிக்கட்டு பேரவை 2025
-மாதாக்கோட்டை, தஞ்சாவூர்
-நாள்: 01-பிப்ரவரி-2025 சனிக்கிழமை
+$name
+$street
+$street2
 
 Participant Details:
 Token No: ${tamer.sequence}
