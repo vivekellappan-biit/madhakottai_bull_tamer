@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madhakottai_bull_tamer/providers/splash_provider.dart';
+import 'package:madhakottai_bull_tamer/screens/loading_screen.dart'
+    show LoadingScreen;
 import 'package:madhakottai_bull_tamer/screens/login_screen.dart';
 
 import 'package:madhakottai_bull_tamer/screens/registration_screen.dart';
@@ -37,7 +39,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       if (context.mounted) {
-        context.go(Routes.home);
+        context.go(Routes.loading);
       }
     } catch (e) {
       isLoading = false;
@@ -63,19 +65,6 @@ class AuthProvider extends ChangeNotifier {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
-  }
-
-  // Check for existing login session
-  Future<void> checkLoginStatus(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    accessToken = prefs.getString('access_token');
-
-    if (accessToken != null && context.mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const RegistrationScreen()),
       );
     }
   }

@@ -24,7 +24,7 @@ class LoadingScreen extends StatelessWidget {
           bullTamer.street,
           bullTamer.street2,
         );
-        print(bullTamer.name);
+        print('Vivek E${bullTamer.name}');
         context.go(Routes.home);
       } else if (provider.errorMessage.isNotEmpty &&
           !provider.errorMessage.contains("Session expired")) {

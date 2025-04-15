@@ -41,6 +41,7 @@ class CustomTextField extends StatelessWidget {
         ],
         textCapitalization: TextCapitalization.characters,
         decoration: InputDecoration(
+          isDense: true,
           labelText: label,
           border: const OutlineInputBorder(),
           filled: true,

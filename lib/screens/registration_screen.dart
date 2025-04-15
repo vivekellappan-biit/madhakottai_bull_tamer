@@ -469,7 +469,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         padding: const EdgeInsets.symmetric(vertical: 15),
       ),
       child: const Text(
-        'Submit',
+        'Register',
         style: TextStyle(fontSize: 18),
       ),
     );
